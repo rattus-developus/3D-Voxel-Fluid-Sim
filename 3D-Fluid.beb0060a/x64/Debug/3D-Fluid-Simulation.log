@@ -1,1 +1,4 @@
-﻿  3D-Fluid-Simulation.vcxproj -> C:\Users\jacob\Desktop\OpenGL-Stuff\Projects\3D-Fluid-Simulation\x64\Debug\3D-Fluid-Simulation.exe
+﻿  main.cpp
+C:\Users\jacob\Desktop\OpenGL-Stuff\Projects\3D-Fluid-Simulation\main.cpp(301,28): warning C4305: 'initializing': truncation from 'double' to 'float'
+glfw3.lib(window.obj) : warning LNK4099: PDB '' was not found with 'glfw3.lib(window.obj)' or at ''; linking object as if no debug info
+  3D-Fluid-Simulation.vcxproj -> C:\Users\jacob\Desktop\OpenGL-Stuff\Projects\3D-Fluid-Simulation\x64\Debug\3D-Fluid-Simulation.exe

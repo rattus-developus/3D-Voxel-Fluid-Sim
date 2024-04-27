@@ -1,0 +1,54 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\jacob\\Desktop\\OpenGL-Stuff\\Projects\\3D-Fluid-Simulation\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{BEB0060A-5907-42FA-8ED0-6B3ACD5971E7}|3D-Fluid-Simulation.vcxproj|C:\\Users\\jacob\\Desktop\\OpenGL-Stuff\\Projects\\3D-Fluid-Simulation\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{BEB0060A-5907-42FA-8ED0-6B3ACD5971E7}|3D-Fluid-Simulation.vcxproj|solutionrelative:main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BEB0060A-5907-42FA-8ED0-6B3ACD5971E7}|3D-Fluid-Simulation.vcxproj|C:\\Users\\jacob\\Desktop\\OpenGL-Stuff\\Projects\\3D-Fluid-Simulation\\defaultVertexShader.vert||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{BEB0060A-5907-42FA-8ED0-6B3ACD5971E7}|3D-Fluid-Simulation.vcxproj|solutionrelative:defaultVertexShader.vert||{8B382828-6202-11D1-8870-0000F87579D2}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "main.cpp",
+              "DocumentMoniker": "C:\\Users\\jacob\\Desktop\\OpenGL-Stuff\\Projects\\3D-Fluid-Simulation\\main.cpp",
+              "RelativeDocumentMoniker": "main.cpp",
+              "ToolTip": "C:\\Users\\jacob\\Desktop\\OpenGL-Stuff\\Projects\\3D-Fluid-Simulation\\main.cpp",
+              "RelativeToolTip": "main.cpp",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABQAAAB9AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-04-26T19:56:57.575Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "defaultVertexShader.vert",
+              "DocumentMoniker": "C:\\Users\\jacob\\Desktop\\OpenGL-Stuff\\Projects\\3D-Fluid-Simulation\\defaultVertexShader.vert",
+              "RelativeDocumentMoniker": "defaultVertexShader.vert",
+              "ToolTip": "C:\\Users\\jacob\\Desktop\\OpenGL-Stuff\\Projects\\3D-Fluid-Simulation\\defaultVertexShader.vert",
+              "RelativeToolTip": "defaultVertexShader.vert",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAMAAAAUAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2024-04-26T19:56:57.105Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
