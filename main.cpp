@@ -38,6 +38,8 @@ int main()
 	void mouseScrollCallback(GLFWwindow * window, double xOffset, double yOffset);
 	void processInput(GLFWwindow * window);
 	void fillOffsetsArray(bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize], float(&offsetArray)[voxelCount * 3]);
+	void updateVoxelMatrix(bool(&voxelMatrix)[xSimulationSize][ySimulationSize][zSimulationSize]);
+	void printVoxelMatrixCount(bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize]);
 
 	//Setup GLFW and glad:
 	glfwInit();
@@ -200,8 +202,6 @@ int main()
 #pragma endregion Make Draw Elements
 
 	//Render loop:
-	//Simulation variables
-	float currentCameraZoom = 1;
 
 	//Depth Testing
 	glEnable(GL_DEPTH_TEST);
@@ -223,7 +223,8 @@ int main()
 		//Update Simulation
 		if (pPressed)
 		{
-
+			printVoxelMatrixCount(voxelMatrix);
+			updateVoxelMatrix(voxelMatrix);
 		}
 
 		//Update offset array (instanced array)
@@ -246,6 +247,54 @@ int main()
 
 	glfwTerminate();
 	return 0;
+}
+
+void printVoxelMatrixCount(bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize])
+{
+	int count = 0;
+	for (int i = 0; i < xSimulationSize; i++)
+	{
+		for (int j = 0; j < ySimulationSize; j++)
+		{
+			for (int k = 0; k < zSimulationSize; k++)
+			{
+				if (voxelMatrix[i][j][k])
+				{
+					count++;
+				}
+			}
+		}
+	}
+
+	std::cout << "Count: " << count;
+	std::cout << voxelMatrix[0][4][0] << std::endl;
+	std::cout << voxelMatrix[0][3][0] << std::endl;
+	std::cout << voxelMatrix[0][2][0] << std::endl;
+	std::cout << voxelMatrix[0][1][0] << std::endl;
+	std::cout << voxelMatrix[0][0][0] << std::endl;
+	std::cout << "---------------------------------------------" << std::endl;
+}
+
+void updateVoxelMatrix(bool (&voxelMatrix)[xSimulationSize][ySimulationSize][zSimulationSize])
+{
+	for (int i = 0; i < xSimulationSize; i++)
+	{
+		for (int j = 0; j < ySimulationSize; j++)
+		{
+			for (int k = 0; k < zSimulationSize; k++)
+			{
+				if (voxelMatrix[i][j][k])
+				{
+					//Move down if none beneath and not at floor
+					if (!voxelMatrix[i][j - 1][k] && j > 0)
+					{
+						voxelMatrix[i][j][k] = false;
+						voxelMatrix[i][j -1][k] = true;
+					}
+				}
+			}
+		}
+	}
 }
 
 void fillOffsetsArray(bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize], float(&offsetArray)[voxelCount * 3])
