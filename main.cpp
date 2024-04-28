@@ -6,28 +6,33 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <cmath>
+#include <random>
 
 /* Features/Plan:
-	- Camera movement in sphere around center of matrix
 	- Basic simulation functionality
-	- Randomized starting positions and count of voxels
 	- GUI menu to customize and control simulation
-	- Performance improvements (multi-threading/compute shaders)
+	- Performance improvements (multi-threading/compute shaders, occlusion culling, etc.)
 */
 
 /* Notes/To-do:
-	- Camera needs to be centered and always looking at origin
-	- GL_STATIC_DRAW is currently being used to draw voxels. This may need to change later when they start moving.
-	- May need to reset offsets VBO after every simulation tick, this could get expensive quickly. (look into glBufferSubData())
+	
+	Notes:
+
+	To-do:
+	- Add sideways simulation logic
 */
 
-float cameraDistance = 20;
-float cameraRotation = 0;
+const double PI = 3.14159265;
 
-const int voxelCount = 8;
-const int xSimulationSize = 5;
-const int ySimulationSize = 5;
-const int zSimulationSize = 5;
+float camDistance = 100;
+float camRotHorizontal = PI / 6;
+float camRotVertical = PI / 2.5f;
+
+const int voxelCount = 99;
+const int xSimulationSize = 15;
+const int ySimulationSize = 15;
+const int zSimulationSize = 15;
+const float voxelSpacing = 2;
 
 bool pPressed = false;
 
@@ -40,6 +45,7 @@ int main()
 	void fillOffsetsArray(bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize], float(&offsetArray)[voxelCount * 3]);
 	void updateVoxelMatrix(bool(&voxelMatrix)[xSimulationSize][ySimulationSize][zSimulationSize]);
 	void printVoxelMatrixCount(bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize]);
+	void fillMatrixRandom(bool(&voxelMatrix)[xSimulationSize][ySimulationSize][zSimulationSize], int matrixSize, int voxelsToSpawn);
 
 	//Setup GLFW and glad:
 	glfwInit();
@@ -118,21 +124,11 @@ int main()
 	//but for now, a bool will represent a voxel there
 	bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize] = { false };
 
-	//Top face corners
-	voxelMatrix[0][0][0] = true;
-	voxelMatrix[0][4][0] = true;
-	voxelMatrix[0][0][4] = true;
-	voxelMatrix[0][4][4] = true;
-	//Bottom face corners
-	voxelMatrix[4][0][0] = true;
-	voxelMatrix[4][4][0] = true;
-	voxelMatrix[4][0][4] = true;
-	voxelMatrix[4][4][4] = true;
-
 	//Eventually put this code in render loop, but for now it's static
 	//In render loop, update voxel matrix with simulation logic just before this
 
 	//Data in this array is tightly packed.
+	fillMatrixRandom(voxelMatrix, xSimulationSize * ySimulationSize * zSimulationSize, voxelCount);
 	float offsetArray[voxelCount * 3];
 	fillOffsetsArray(voxelMatrix, offsetArray);
 
@@ -146,14 +142,16 @@ int main()
 	//Add rotation
 	modelToWorld = glm::rotate(modelToWorld, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-	//view identity matrix
-	glm::mat4 view = glm::mat4(1.0f);
-	// Move the "camera" up 1 units on z axis
-	view = glm::translate(view, glm::vec3(-5.0f, 0.0f, -20.0f));
 
-	//perspective project matrix with fov 45, aspect ration 4:3, near and far plane 0.1 and 100 
+	//View identity matrix
+	glm::mat4 view = glm::mat4(1.0f);
+	float matrixCenterX = (xSimulationSize * voxelSpacing) / 2.0f;
+	float matrixCenterY = (ySimulationSize * voxelSpacing) / 2.0f;
+	float matrixCenterZ = (zSimulationSize * voxelSpacing) / 2.0f;
+
+	//perspective project matrix with fov 45, aspect ration 4:3, near and far plane 0.1 and 1000 
 	glm::mat4 projection;
-	projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+	projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 1000.0f);
 
 	//Assign matrices to vertex shader
 	int modelUniformLoc = glGetUniformLocation(defaultShader.ID, "modelToWorld");
@@ -194,7 +192,7 @@ int main()
 	unsigned int offsetVBO;
 	glGenBuffers(1, &offsetVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, offsetVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * voxelCount * 3, &offsetArray[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * voxelCount * 3, &offsetArray[0], GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glVertexAttribDivisor(1, 1);
 	glEnableVertexAttribArray(1);
@@ -214,16 +212,18 @@ int main()
 		glfwPollEvents();
 
 		//Update Camera matrix:
-		//Change camera z position
-		view[3][2] = cos(-cameraRotation) * -cameraDistance;
-		//Change camera y position
-		view[3][0] = sin(-cameraRotation) * -cameraDistance;
+		float camPosX = (camDistance * sin(camRotHorizontal) * sin(camRotVertical)) + matrixCenterX;
+		float camPosY = (camDistance * cos(camRotVertical)) + matrixCenterY;
+		float camPosZ = (camDistance * cos(camRotHorizontal) * sin(camRotVertical)) + matrixCenterZ;
+
+		view = glm::lookAt(glm::vec3(camPosX, camPosY, camPosZ),     //Position
+						   glm::vec3(matrixCenterX, matrixCenterY, matrixCenterZ),   //Target Position
+						   glm::vec3(0.0f, 1.0f, 0.0f));							 //Up 
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
 		//Update Simulation
 		if (pPressed)
 		{
-			printVoxelMatrixCount(voxelMatrix);
 			updateVoxelMatrix(voxelMatrix);
 		}
 
@@ -249,32 +249,41 @@ int main()
 	return 0;
 }
 
-void printVoxelMatrixCount(bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize])
+
+//Randomly fills the voxel matrix with a voxelCount/matrixSize chance to generate a voxel at each location.
+void fillMatrixRandom(bool(&voxelMatrix)[xSimulationSize][ySimulationSize][zSimulationSize], int matrixSize, int voxelsToSpawn)
 {
-	int count = 0;
-	for (int i = 0; i < xSimulationSize; i++)
+	int randomIntInRange(int min, int max);
+	int voxelsSpawned = 0;
+
+	int chosenX;
+	int chosenY;
+	int chosenZ;
+
+	while (voxelsSpawned < voxelCount)
 	{
-		for (int j = 0; j < ySimulationSize; j++)
+		chosenX = randomIntInRange(0, xSimulationSize - 1);
+		chosenY = randomIntInRange(0, ySimulationSize - 1);
+		chosenZ = randomIntInRange(0, zSimulationSize - 1);
+
+		if (!voxelMatrix[chosenX][chosenY][chosenZ])
 		{
-			for (int k = 0; k < zSimulationSize; k++)
-			{
-				if (voxelMatrix[i][j][k])
-				{
-					count++;
-				}
-			}
+			voxelMatrix[chosenX][chosenY][chosenZ] = true;
+			voxelsSpawned++;
 		}
 	}
-
-	std::cout << "Count: " << count;
-	std::cout << voxelMatrix[0][4][0] << std::endl;
-	std::cout << voxelMatrix[0][3][0] << std::endl;
-	std::cout << voxelMatrix[0][2][0] << std::endl;
-	std::cout << voxelMatrix[0][1][0] << std::endl;
-	std::cout << voxelMatrix[0][0][0] << std::endl;
-	std::cout << "---------------------------------------------" << std::endl;
 }
 
+//Min and max inclusive
+int randomIntInRange(int min, int max) 
+{
+	static std::random_device rd;
+	static std::mt19937 gen(rd());
+	std::uniform_int_distribution<int> dis(min, max);
+	return dis(gen);
+}
+
+//Performs a single simulation step on the voxel matrix
 void updateVoxelMatrix(bool (&voxelMatrix)[xSimulationSize][ySimulationSize][zSimulationSize])
 {
 	for (int i = 0; i < xSimulationSize; i++)
@@ -286,7 +295,7 @@ void updateVoxelMatrix(bool (&voxelMatrix)[xSimulationSize][ySimulationSize][zSi
 				if (voxelMatrix[i][j][k])
 				{
 					//Move down if none beneath and not at floor
-					if (!voxelMatrix[i][j - 1][k] && j > 0)
+					if (j > 0 && !voxelMatrix[i][j - 1][k])
 					{
 						voxelMatrix[i][j][k] = false;
 						voxelMatrix[i][j -1][k] = true;
@@ -297,9 +306,9 @@ void updateVoxelMatrix(bool (&voxelMatrix)[xSimulationSize][ySimulationSize][zSi
 	}
 }
 
+//Fills the offset instanced array with the offset for each voxel
 void fillOffsetsArray(bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize], float(&offsetArray)[voxelCount * 3])
 {
-	const float voxelSpacing = 2;
 	int voxelsDrawn = 0;
 
 	for (int i = 0; i < xSimulationSize; i++)
@@ -324,34 +333,44 @@ void mouseScrollCallback(GLFWwindow* window, double xOffset, double yOffset)
 {
 	float zoomSensitivity = 5;
 	float maxZoomClose = 5;
-	float maxZoomFar = 100;
-	if (yOffset > 0 && cameraDistance > maxZoomClose)
+	float maxZoomFar = 1500;
+	if (yOffset > 0 && camDistance > maxZoomClose)
 	{
 		//Scroll up (zoom in)
-		cameraDistance -= zoomSensitivity;
+		camDistance -= zoomSensitivity;
 	}
-	else if (yOffset < 0 && cameraDistance < maxZoomFar)
+	else if (yOffset < 0 && camDistance < maxZoomFar)
 	{
 		//Scroll down (zoom out)
-		cameraDistance += zoomSensitivity;
+		camDistance += zoomSensitivity;
 	}
 }
 
 void processInput(GLFWwindow* window)
 {
-	float rotationSensitivity = 0.01;
+	float rotationSensitivity = 0.025;
 
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		cameraRotation += rotationSensitivity;
+		camRotHorizontal += rotationSensitivity;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-		cameraRotation -= rotationSensitivity;
+		camRotHorizontal -= rotationSensitivity;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && camRotVertical < PI - rotationSensitivity)
+	{
+		camRotVertical += rotationSensitivity;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && camRotVertical > rotationSensitivity)
+	{
+		camRotVertical -= rotationSensitivity;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
@@ -361,6 +380,7 @@ void processInput(GLFWwindow* window)
 	else pPressed = false;
 }
 
+//A callback for whenever the window is resized
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
