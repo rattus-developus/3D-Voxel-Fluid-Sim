@@ -28,10 +28,10 @@ float camDistance = 100;
 float camRotHorizontal = PI / 6;
 float camRotVertical = PI / 2.5f;
 
-const int voxelCount = 99;
-const int xSimulationSize = 15;
-const int ySimulationSize = 15;
-const int zSimulationSize = 15;
+const int voxelCount = 625;
+const int xSimulationSize = 25;
+const int ySimulationSize = 25;
+const int zSimulationSize = 25;
 const float voxelSpacing = 2;
 
 bool pPressed = false;
@@ -128,7 +128,14 @@ int main()
 	//In render loop, update voxel matrix with simulation logic just before this
 
 	//Data in this array is tightly packed.
-	fillMatrixRandom(voxelMatrix, xSimulationSize * ySimulationSize * zSimulationSize, voxelCount);
+	//fillMatrixRandom(voxelMatrix, xSimulationSize * ySimulationSize * zSimulationSize, voxelCount);
+	for (int i = 0; i < xSimulationSize; i++)
+	{
+		for (int j = 0; j < ySimulationSize; j++)
+		{
+			voxelMatrix[i][j][0] = true;
+		}
+	}
 	float offsetArray[voxelCount * 3];
 	fillOffsetsArray(voxelMatrix, offsetArray);
 
@@ -286,6 +293,7 @@ int randomIntInRange(int min, int max)
 //Performs a single simulation step on the voxel matrix
 void updateVoxelMatrix(bool (&voxelMatrix)[xSimulationSize][ySimulationSize][zSimulationSize])
 {
+	int rdm = 0;
 	for (int i = 0; i < xSimulationSize; i++)
 	{
 		for (int j = 0; j < ySimulationSize; j++)
@@ -294,11 +302,44 @@ void updateVoxelMatrix(bool (&voxelMatrix)[xSimulationSize][ySimulationSize][zSi
 			{
 				if (voxelMatrix[i][j][k])
 				{
+					rdm = randomIntInRange(0, 3);
 					//Move down if none beneath and not at floor
 					if (j > 0 && !voxelMatrix[i][j - 1][k])
 					{
 						voxelMatrix[i][j][k] = false;
 						voxelMatrix[i][j -1][k] = true;
+					}
+					else if (rdm == 0)
+					{
+						if (i > 0 && !voxelMatrix[i - 1][j][k])
+						{
+							voxelMatrix[i][j][k] = false;
+							voxelMatrix[i - 1][j][k] = true;
+						}
+					}
+					else if (rdm == 1)
+					{
+						if (i < xSimulationSize - 1 && !voxelMatrix[i + 1][j][k])
+						{
+							voxelMatrix[i][j][k] = false;
+							voxelMatrix[i + 1][j][k] = true;
+						}
+					}
+					else if (rdm == 2)
+					{
+						if (k > 0 && !voxelMatrix[i][j][k - 1])
+						{
+							voxelMatrix[i][j][k] = false;
+							voxelMatrix[i][j][k - 1] = true;
+						}
+					}
+					else
+					{
+						if (k < zSimulationSize - 1 && !voxelMatrix[i][j][k + 1])
+						{
+							voxelMatrix[i][j][k] = false;
+							voxelMatrix[i][j][k + 1] = true;
+						}
 					}
 				}
 			}
@@ -355,22 +396,22 @@ void processInput(GLFWwindow* window)
 
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		camRotHorizontal += rotationSensitivity;
+		camRotHorizontal -= rotationSensitivity;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-		camRotHorizontal -= rotationSensitivity;
+		camRotHorizontal += rotationSensitivity;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && camRotVertical < PI - rotationSensitivity)
 	{
-		camRotVertical += rotationSensitivity;
+		camRotVertical -= rotationSensitivity;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && camRotVertical > rotationSensitivity)
 	{
-		camRotVertical -= rotationSensitivity;
+		camRotVertical += rotationSensitivity;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
