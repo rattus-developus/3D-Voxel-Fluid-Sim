@@ -28,13 +28,14 @@ float camDistance = 100;
 float camRotHorizontal = PI / 6;
 float camRotVertical = PI / 2.5f;
 
-const int voxelCount = 625;
-const int xSimulationSize = 25;
-const int ySimulationSize = 25;
-const int zSimulationSize = 25;
+const int voxelCount = 2500;
+const int xSimulationSize = 50;
+const int ySimulationSize = 50;
+const int zSimulationSize = 50;
 const float voxelSpacing = 2;
 
 bool pPressed = false;
+bool oPressed = false;
 
 int main()
 {
@@ -233,6 +234,28 @@ int main()
 		{
 			updateVoxelMatrix(voxelMatrix);
 		}
+		else if (oPressed)
+		{
+			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix(voxelMatrix);
+
+			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix(voxelMatrix);
+
+			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix(voxelMatrix);
+
+			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix(voxelMatrix);
+		}
 
 		//Update offset array (instanced array)
 		fillOffsetsArray(voxelMatrix, offsetArray);
@@ -404,12 +427,12 @@ void processInput(GLFWwindow* window)
 		camRotHorizontal += rotationSensitivity;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && camRotVertical < PI - rotationSensitivity)
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && camRotVertical > rotationSensitivity)
 	{
 		camRotVertical -= rotationSensitivity;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && camRotVertical > rotationSensitivity)
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && camRotVertical < PI - rotationSensitivity)
 	{
 		camRotVertical += rotationSensitivity;
 	}
@@ -419,6 +442,12 @@ void processInput(GLFWwindow* window)
 		pPressed = true;
 	}
 	else pPressed = false;
+
+	if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
+	{
+		oPressed = true;
+	}
+	else oPressed = false;
 }
 
 //A callback for whenever the window is resized
