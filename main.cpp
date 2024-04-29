@@ -22,20 +22,29 @@
 	- Add sideways simulation logic
 */
 
+
 const double PI = 3.14159265;
 
+//Input and Controls
 float camDistance = 100;
 float camRotHorizontal = PI / 6;
 float camRotVertical = PI / 2.5f;
+bool pPressed = false;
+bool oPressed = false;
 
+//Simulation details
 const int voxelCount = 2500;
 const int xSimulationSize = 50;
 const int ySimulationSize = 50;
 const int zSimulationSize = 50;
 const float voxelSpacing = 2;
 
-bool pPressed = false;
-bool oPressed = false;
+glm::mat4 projection;
+
+//For more complex cellular automota, a struct/object may need to be used instead of bools
+//but for now, a bool will represent a voxel there
+bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize] = { false };
+float offsetArray[voxelCount * 3];
 
 int main()
 {
@@ -68,6 +77,7 @@ int main()
 	}
 	glViewport(0, 0, 800, 600);
 	//Input call
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetScrollCallback(window, mouseScrollCallback);
 
 	//Setup shader:
@@ -121,13 +131,6 @@ int main()
 
 #pragma endregion Shared Voxel Data
 
-	//For more complex cellular automota, a struct/object may need to be used instead of bools
-	//but for now, a bool will represent a voxel there
-	bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize] = { false };
-
-	//Eventually put this code in render loop, but for now it's static
-	//In render loop, update voxel matrix with simulation logic just before this
-
 	//Data in this array is tightly packed.
 	//fillMatrixRandom(voxelMatrix, xSimulationSize * ySimulationSize * zSimulationSize, voxelCount);
 	for (int i = 0; i < xSimulationSize; i++)
@@ -137,7 +140,7 @@ int main()
 			voxelMatrix[i][j][0] = true;
 		}
 	}
-	float offsetArray[voxelCount * 3];
+
 	fillOffsetsArray(voxelMatrix, offsetArray);
 
 
@@ -157,8 +160,7 @@ int main()
 	float matrixCenterY = (ySimulationSize * voxelSpacing) / 2.0f;
 	float matrixCenterZ = (zSimulationSize * voxelSpacing) / 2.0f;
 
-	//perspective project matrix with fov 45, aspect ration 4:3, near and far plane 0.1 and 1000 
-	glm::mat4 projection;
+	//perspective project matrix with fov 45, aspect ration 4:3, near and far plane 0.1 and 1000
 	projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 1000.0f);
 
 	//Assign matrices to vertex shader
@@ -317,6 +319,7 @@ int randomIntInRange(int min, int max)
 void updateVoxelMatrix(bool (&voxelMatrix)[xSimulationSize][ySimulationSize][zSimulationSize])
 {
 	int rdm = 0;
+
 	for (int i = 0; i < xSimulationSize; i++)
 	{
 		for (int j = 0; j < ySimulationSize; j++)
@@ -454,4 +457,5 @@ void processInput(GLFWwindow* window)
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
+	//projection = glm::perspective(glm::radians(45.0f), 800.0 / 600.0, 0.1f, 1000.0f);
 }

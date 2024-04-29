@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\jacob\Desktop\OpenGL-Stuff\ThirdParty\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\jacob\Desktop\OpenGL-Stuff\ThirdParty\Libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\jacob\Desktop\OpenGL Stuff\ThirdParty\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\jacob\Desktop\OpenGL Stuff\ThirdParty\Libraries;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>C:\Users\jacob\Desktop\OpenGL-Stuff\ThirdParty\Include;$(IncludePath)</IncludePath>
@@ -137,7 +137,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Library Installs\glad\src\glad.c" />
+    <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
