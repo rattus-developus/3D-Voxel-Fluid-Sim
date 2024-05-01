@@ -20,6 +20,7 @@
 
 	To-do:
 	- Add sideways simulation logic
+	- Optimize (notes on phone)
 */
 
 
@@ -41,10 +42,35 @@ const float voxelSpacing = 2;
 
 glm::mat4 projection;
 
-//For more complex cellular automota, a struct/object may need to be used instead of bools
-//but for now, a bool will represent a voxel there
-bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize] = { false };
+struct vec3Int
+{
+	int x = 0;
+	int y = 0;
+	int z = 0;
+	vec3Int(int _x, int _y, int _z)
+	{
+		x = _x;
+		y = _y;
+		z = _z;
+	}
+};
+
+struct voxelPosition
+{
+	bool containsVoxel = false;
+
+	glm::vec3 velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+
+	int rdm = 0;
+
+	voxelPosition();
+};
+
+voxelPosition::voxelPosition() {}
+
+voxelPosition voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize];
 float offsetArray[voxelCount * 3];
+
 
 int main()
 {
@@ -52,17 +78,17 @@ int main()
 	void framebuffer_size_callback(GLFWwindow * window, int width, int height);
 	void mouseScrollCallback(GLFWwindow * window, double xOffset, double yOffset);
 	void processInput(GLFWwindow * window);
-	void fillOffsetsArray(bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize], float(&offsetArray)[voxelCount * 3]);
-	void updateVoxelMatrix(bool(&voxelMatrix)[xSimulationSize][ySimulationSize][zSimulationSize]);
-	void printVoxelMatrixCount(bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize]);
-	void fillMatrixRandom(bool(&voxelMatrix)[xSimulationSize][ySimulationSize][zSimulationSize], int matrixSize, int voxelsToSpawn);
+	void fillOffsetsArray();
+	void updateVoxelMatrix();
+	void printVoxelMatrixCount();
+	void fillMatrixRandom();
 
 	//Setup GLFW and glad:
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	GLFWwindow* window = glfwCreateWindow(800, 600, "HelloTriangle", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(800, 600, "Voxels", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -132,7 +158,9 @@ int main()
 #pragma endregion Shared Voxel Data
 
 	//Data in this array is tightly packed.
-	//fillMatrixRandom(voxelMatrix, xSimulationSize * ySimulationSize * zSimulationSize, voxelCount);
+
+	fillMatrixRandom();
+	/*
 	for (int i = 0; i < xSimulationSize; i++)
 	{
 		for (int j = 0; j < ySimulationSize; j++)
@@ -140,8 +168,9 @@ int main()
 			voxelMatrix[i][j][0] = true;
 		}
 	}
+	*/
 
-	fillOffsetsArray(voxelMatrix, offsetArray);
+	//fillOffsetsArray(voxelMatrix, offsetArray);
 
 
 #pragma region
@@ -234,33 +263,33 @@ int main()
 		//Update Simulation
 		if (pPressed)
 		{
-			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix();
 		}
 		else if (oPressed)
 		{
-			updateVoxelMatrix(voxelMatrix);
-			updateVoxelMatrix(voxelMatrix);
-			updateVoxelMatrix(voxelMatrix);
-			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix();
+			updateVoxelMatrix();
+			updateVoxelMatrix();
+			updateVoxelMatrix();
 
-			updateVoxelMatrix(voxelMatrix);
-			updateVoxelMatrix(voxelMatrix);
-			updateVoxelMatrix(voxelMatrix);
-			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix();
+			updateVoxelMatrix();
+			updateVoxelMatrix();
+			updateVoxelMatrix();
 
-			updateVoxelMatrix(voxelMatrix);
-			updateVoxelMatrix(voxelMatrix);
-			updateVoxelMatrix(voxelMatrix);
-			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix();
+			updateVoxelMatrix();
+			updateVoxelMatrix();
+			updateVoxelMatrix();
 
-			updateVoxelMatrix(voxelMatrix);
-			updateVoxelMatrix(voxelMatrix);
-			updateVoxelMatrix(voxelMatrix);
-			updateVoxelMatrix(voxelMatrix);
+			updateVoxelMatrix();
+			updateVoxelMatrix();
+			updateVoxelMatrix();
+			updateVoxelMatrix();
 		}
 
 		//Update offset array (instanced array)
-		fillOffsetsArray(voxelMatrix, offsetArray);
+		fillOffsetsArray();
 		glBindBuffer(GL_ARRAY_BUFFER, offsetVBO);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * voxelCount * 3, &offsetArray[0]);
 
@@ -283,7 +312,7 @@ int main()
 
 
 //Randomly fills the voxel matrix with a voxelCount/matrixSize chance to generate a voxel at each location.
-void fillMatrixRandom(bool(&voxelMatrix)[xSimulationSize][ySimulationSize][zSimulationSize], int matrixSize, int voxelsToSpawn)
+void fillMatrixRandom()
 {
 	int randomIntInRange(int min, int max);
 	int voxelsSpawned = 0;
@@ -298,9 +327,9 @@ void fillMatrixRandom(bool(&voxelMatrix)[xSimulationSize][ySimulationSize][zSimu
 		chosenY = randomIntInRange(0, ySimulationSize - 1);
 		chosenZ = randomIntInRange(0, zSimulationSize - 1);
 
-		if (!voxelMatrix[chosenX][chosenY][chosenZ])
+		if (!voxelMatrix[chosenX][chosenY][chosenZ].containsVoxel)
 		{
-			voxelMatrix[chosenX][chosenY][chosenZ] = true;
+			voxelMatrix[chosenX][chosenY][chosenZ].containsVoxel = true;
 			voxelsSpawned++;
 		}
 	}
@@ -315,8 +344,16 @@ int randomIntInRange(int min, int max)
 	return dis(gen);
 }
 
+void swapVoxelPosition(vec3Int from, vec3Int to)
+{
+	voxelMatrix[to.x][to.y][to.z].containsVoxel = true;
+	//voxelMatrix[to.x][to.y][to.z].velocity = velocity;
+
+	voxelMatrix[from.x][from.y][from.z] = voxelPosition();
+}
+
 //Performs a single simulation step on the voxel matrix
-void updateVoxelMatrix(bool (&voxelMatrix)[xSimulationSize][ySimulationSize][zSimulationSize])
+void updateVoxelMatrix()
 {
 	int rdm = 0;
 
@@ -326,46 +363,79 @@ void updateVoxelMatrix(bool (&voxelMatrix)[xSimulationSize][ySimulationSize][zSi
 		{
 			for (int k = 0; k < zSimulationSize; k++)
 			{
-				if (voxelMatrix[i][j][k])
+				if (voxelMatrix[i][j][k].containsVoxel)
 				{
+					//Pick random direction to start sampling +x, -x, +y, -y
 					rdm = randomIntInRange(0, 3);
+
 					//Move down if none beneath and not at floor
-					if (j > 0 && !voxelMatrix[i][j - 1][k])
+					if (j > 0 && !voxelMatrix[i][j - 1][k].containsVoxel)
 					{
-						voxelMatrix[i][j][k] = false;
-						voxelMatrix[i][j -1][k] = true;
+						swapVoxelPosition(vec3Int(i, j, k), vec3Int(i, j - 1, k));
 					}
+					//+x
 					else if (rdm == 0)
 					{
-						if (i > 0 && !voxelMatrix[i - 1][j][k])
-						{
-							voxelMatrix[i][j][k] = false;
-							voxelMatrix[i - 1][j][k] = true;
-						}
+						if(i < xSimulationSize - 1 && !voxelMatrix[i + 1][j][k].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i + 1, j, k));
+
+						//-x
+						else if(i > 0 && !voxelMatrix[i - 1][j][k].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i - 1, j, k));
+						//+y
+						else if(k < zSimulationSize - 1 && !voxelMatrix[i][j][k + 1].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i, j, k + 1));
+						//-y
+						else if(k > 0 && !voxelMatrix[i][j][k - 1].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i, j, k - 1));
 					}
+					//-x
 					else if (rdm == 1)
 					{
-						if (i < xSimulationSize - 1 && !voxelMatrix[i + 1][j][k])
-						{
-							voxelMatrix[i][j][k] = false;
-							voxelMatrix[i + 1][j][k] = true;
-						}
+						if(i > 0 && !voxelMatrix[i - 1][j][k].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i - 1, j, k));
+
+						//+y
+						else if (k < zSimulationSize - 1 && !voxelMatrix[i][j][k + 1].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i, j, k + 1));
+						//-y
+						else if (k > 0 && !voxelMatrix[i][j][k - 1].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i, j, k - 1));
+						//+x
+						else if (i < xSimulationSize - 1 && !voxelMatrix[i + 1][j][k].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i + 1, j, k));
 					}
+					//+y
 					else if (rdm == 2)
 					{
-						if (k > 0 && !voxelMatrix[i][j][k - 1])
-						{
-							voxelMatrix[i][j][k] = false;
-							voxelMatrix[i][j][k - 1] = true;
-						}
+						if(k < zSimulationSize - 1 && !voxelMatrix[i][j][k + 1].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i, j, k + 1));
+
+						//-y
+						else if (k > 0 && !voxelMatrix[i][j][k - 1].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i, j, k - 1));
+						//+x
+						else if (i < xSimulationSize - 1 && !voxelMatrix[i + 1][j][k].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i + 1, j, k));
+						//-x
+						else if (i > 0 && !voxelMatrix[i - 1][j][k].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i - 1, j, k));
 					}
-					else
+					//-y
+					else if (rdm == 3)
 					{
-						if (k < zSimulationSize - 1 && !voxelMatrix[i][j][k + 1])
-						{
-							voxelMatrix[i][j][k] = false;
-							voxelMatrix[i][j][k + 1] = true;
-						}
+						if(k > 0 && !voxelMatrix[i][j][k - 1].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i, j, k - 1));
+						
+						//+x
+						else if (i < xSimulationSize - 1 && !voxelMatrix[i + 1][j][k].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i + 1, j, k));
+						//-x
+						else if (i > 0 && !voxelMatrix[i - 1][j][k].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i - 1, j, k));
+						//+y
+						else if (k < zSimulationSize - 1 && !voxelMatrix[i][j][k + 1].containsVoxel)
+							swapVoxelPosition(vec3Int(i, j, k), vec3Int(i, j, k + 1));
 					}
 				}
 			}
@@ -374,7 +444,7 @@ void updateVoxelMatrix(bool (&voxelMatrix)[xSimulationSize][ySimulationSize][zSi
 }
 
 //Fills the offset instanced array with the offset for each voxel
-void fillOffsetsArray(bool voxelMatrix[xSimulationSize][ySimulationSize][zSimulationSize], float(&offsetArray)[voxelCount * 3])
+void fillOffsetsArray()
 {
 	int voxelsDrawn = 0;
 
@@ -384,7 +454,7 @@ void fillOffsetsArray(bool voxelMatrix[xSimulationSize][ySimulationSize][zSimula
 		{
 			for (int k = 0; k < zSimulationSize; k++)
 			{
-				if (voxelMatrix[i][j][k])
+				if (voxelMatrix[i][j][k].containsVoxel)
 				{
 					offsetArray[3 * voxelsDrawn] = i * voxelSpacing;
 					offsetArray[3 * voxelsDrawn + 1] = j * voxelSpacing;
