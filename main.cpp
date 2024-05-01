@@ -19,7 +19,6 @@
 	Notes:
 
 	To-do:
-	- Add sideways simulation logic
 	- Optimize (notes on phone)
 */
 
@@ -47,6 +46,7 @@ struct vec3Int
 	int x = 0;
 	int y = 0;
 	int z = 0;
+	vec3Int();
 	vec3Int(int _x, int _y, int _z)
 	{
 		x = _x;
@@ -54,12 +54,13 @@ struct vec3Int
 		z = _z;
 	}
 };
+vec3Int::vec3Int() {}
 
 struct voxelPosition
 {
 	bool containsVoxel = false;
 
-	glm::vec3 velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 velocity;
 
 	int rdm = 0;
 
@@ -79,7 +80,8 @@ int main()
 	void mouseScrollCallback(GLFWwindow * window, double xOffset, double yOffset);
 	void processInput(GLFWwindow * window);
 	void fillOffsetsArray();
-	void updateVoxelMatrix();
+	void updateVoxelMatrixRandom();
+	void updateVoxelMatrixVelocity();
 	void printVoxelMatrixCount();
 	void fillMatrixRandom();
 
@@ -159,16 +161,16 @@ int main()
 
 	//Data in this array is tightly packed.
 
-	fillMatrixRandom();
-	/*
+	//fillMatrixRandom();
+	
 	for (int i = 0; i < xSimulationSize; i++)
 	{
 		for (int j = 0; j < ySimulationSize; j++)
 		{
-			voxelMatrix[i][j][0] = true;
+			voxelMatrix[i][j][0].containsVoxel = true;
 		}
 	}
-	*/
+	
 
 	//fillOffsetsArray(voxelMatrix, offsetArray);
 
@@ -263,29 +265,11 @@ int main()
 		//Update Simulation
 		if (pPressed)
 		{
-			updateVoxelMatrix();
+			updateVoxelMatrixVelocity();
 		}
 		else if (oPressed)
 		{
-			updateVoxelMatrix();
-			updateVoxelMatrix();
-			updateVoxelMatrix();
-			updateVoxelMatrix();
-
-			updateVoxelMatrix();
-			updateVoxelMatrix();
-			updateVoxelMatrix();
-			updateVoxelMatrix();
-
-			updateVoxelMatrix();
-			updateVoxelMatrix();
-			updateVoxelMatrix();
-			updateVoxelMatrix();
-
-			updateVoxelMatrix();
-			updateVoxelMatrix();
-			updateVoxelMatrix();
-			updateVoxelMatrix();
+			updateVoxelMatrixRandom();
 		}
 
 		//Update offset array (instanced array)
@@ -347,13 +331,51 @@ int randomIntInRange(int min, int max)
 void swapVoxelPosition(vec3Int from, vec3Int to)
 {
 	voxelMatrix[to.x][to.y][to.z].containsVoxel = true;
-	//voxelMatrix[to.x][to.y][to.z].velocity = velocity;
+	voxelMatrix[to.x][to.y][to.z].velocity = voxelMatrix[from.x][from.y][from.z].velocity;
 
 	voxelMatrix[from.x][from.y][from.z] = voxelPosition();
 }
 
 //Performs a single simulation step on the voxel matrix
-void updateVoxelMatrix()
+void updateVoxelMatrixVelocity()
+{
+	int gravity = 1.0f;
+	vec3Int desiredPos;
+	glm::vec3 vel;
+
+	for (int i = 0; i < xSimulationSize; i++)
+	{
+		for (int j = 0; j < ySimulationSize; j++)
+		{
+			for (int k = 0; k < zSimulationSize; k++)
+			{
+				if (voxelMatrix[i][j][k].containsVoxel)
+				{
+					voxelMatrix[i][j][k].velocity.z += gravity;
+
+					vel = voxelMatrix[i][j][k].velocity;
+					desiredPos = vec3Int(vel.x + i, vel.y + j, vel.z + k);
+
+					//If desired position is empty, move there
+					if (!voxelMatrix[desiredPos.x][desiredPos.y][desiredPos.z].containsVoxel)
+					{
+						swapVoxelPosition(vec3Int(i, j, k), vec3Int(desiredPos.x, desiredPos.y, desiredPos.z));
+					}
+					//Else half velocity and flip
+					else
+					{
+						voxelMatrix[i][j][k].velocity.x = -(vel.x / 2);
+						voxelMatrix[i][j][k].velocity.y = -(vel.y / 2);
+						voxelMatrix[i][j][k].velocity.z = -(vel.z / 2);
+					}
+				}
+			}
+		}
+	}
+}
+
+//Performs a single simulation step on the voxel matrix
+void updateVoxelMatrixRandom()
 {
 	int rdm = 0;
 
@@ -485,7 +507,7 @@ void mouseScrollCallback(GLFWwindow* window, double xOffset, double yOffset)
 
 void processInput(GLFWwindow* window)
 {
-	float rotationSensitivity = 0.025;
+	float rotationSensitivity = 0.0125;
 
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
